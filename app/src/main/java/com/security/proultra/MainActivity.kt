@@ -22,15 +22,21 @@ class MainActivity : AppCompatActivity() {
         btnCheck.setOnClickListener {
             val targetUrl = inputField.text.toString().trim()
             if (targetUrl.isNotEmpty()) {
-                resultView.text = "Running SecurityProUltra Audit..."
+                resultView.text = "[*] Running SecurityProUltra Audit..."
                 thread {
-                    val auditReport = checkSecurityLoopholes(targetUrl)
-                    runOnUiThread {
-                        resultView.text = auditReport
+                    try {
+                        val auditReport = checkSecurityLoopholes(targetUrl)
+                        runOnUiThread {
+                            resultView.text = auditReport
+                        }
+                    } catch (e: Exception) {
+                        runOnUiThread {
+                            resultView.text = "[X] Error during audit: ${e.localizedMessage}"
+                        }
                     }
                 }
             } else {
-                resultView.text = "Please enter a valid Domain or URL (e.g., example.com)"
+                resultView.text = "[!] Please enter a valid Domain or URL (e.g., example.com)"
             }
         }
     }
