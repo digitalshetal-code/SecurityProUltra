@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#0A0A0A">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="SecurityProUltra"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:textColor="#00FF66"
+        android:gravity="center"
+        android:paddingBottom="16dp"/>
+
+    <EditText
+        android:id="@+id/inputDomain"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter Target (e.g., example.com)"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#777777"
+        android:backgroundTint="#00FF66"
+        android:padding="12dp"/>
+
+    <Button
+        android:id="@+id/btnLoopholeCheck"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Run Ultra Security Audit"
+        android:backgroundTint="#00FF66"
+        android:textColor="#000000"
+        android:textStyle="bold"
+        android:layout_marginTop="12dp"/>
+
+    <TextView
+        android:id="@+id/txtResults"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="Ultra audit logs will appear here..."
+        android:textColor="#00FF66"
+        android:textSize="13sp"
+        android:fontFamily="monospace"
+        android:layout_marginTop="16dp"
+        android:background="#141414"
+        android:padding="12dp"/>
+
+</LinearLayout>
