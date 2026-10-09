@@ -1,52 +1,62 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:background="#0A0A0A">
+package com.security.proultra
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="SecurityProUltra"
-        android:textSize="26sp"
-        android:textStyle="bold"
-        android:textColor="#00FF66"
-        android:gravity="center"
-        android:paddingBottom="16dp"/>
+import android.os.Bundle
+import android.widget.Button
+import android.widget.EditText
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import java.net.HttpURLConnection
+import java.net.URL
+import kotlin.concurrent.thread
 
-    <EditText
-        android:id="@+id/inputDomain"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Enter Target (e.g., example.com)"
-        android:textColor="#FFFFFF"
-        android:textColorHint="#777777"
-        android:backgroundTint="#00FF66"
-        android:padding="12dp"/>
+class MainActivity : AppCompatActivity() {
 
-    <Button
-        android:id="@+id/btnLoopholeCheck"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Run Ultra Security Audit"
-        android:backgroundTint="#00FF66"
-        android:textColor="#000000"
-        android:textStyle="bold"
-        android:layout_marginTop="12dp"/>
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
-    <TextView
-        android:id="@+id/txtResults"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:text="Ultra audit logs will appear here..."
-        android:textColor="#00FF66"
-        android:textSize="13sp"
-        android:fontFamily="monospace"
-        android:layout_marginTop="16dp"
-        android:background="#141414"
-        android:padding="12dp"/>
+        val inputField = findViewById<EditText>(R.id.inputDomain)
+        val btnCheck = findViewById<Button>(R.id.btnLoopholeCheck)
+        val resultView = findViewById<TextView>(R.id.txtResults)
 
-</LinearLayout>
+        btnCheck.setOnClickListener {
+            val targetUrl = inputField.text.toString().trim()
+            if (targetUrl.isNotEmpty()) {
+                resultView.text = "Scanning..."
+                thread {
+                    try {
+                        val formattedUrl = if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
+                            "https://$targetUrl"
+                        } else {
+                            targetUrl
+                        }
+
+                        val url = URL(formattedUrl)
+                        val connection = url.openConnection() as HttpURLConnection
+                        connection.connectTimeout = 4000
+                        connection.connect()
+
+                        val sb = StringBuilder()
+                        sb.append("Target: $targetUrl\n")
+                        sb.append("Connection: Successful\n")
+                        sb.append("Protocol: ${url.protocol.uppercase()}\n")
+                        
+                        val hsts = connection.getHeaderField("Strict-Transport-Security")
+                        sb.append("HSTS: ${if (hsts != null) "Secure" else "Missing"}\n")
+
+                        runOnUiThread {
+                            resultView.text = sb.toString()
+                        }
+                    } catch (e: Exception) {
+                        runOnUiThread {
+                            resultView.text = "Audit failed: ${e.message}"
+                        }
+                    }
+                }
+            } else {
+                resultView.text = "Please enter a valid domain."
+            }
+        }
+    }
+}
+            
