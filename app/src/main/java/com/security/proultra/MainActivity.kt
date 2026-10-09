@@ -22,70 +22,40 @@ class MainActivity : AppCompatActivity() {
         btnCheck.setOnClickListener {
             val targetUrl = inputField.text.toString().trim()
             if (targetUrl.isNotEmpty()) {
-                resultView.text = "[*] Running SecurityProUltra Audit..."
+                resultView.text = "Scanning..."
                 thread {
                     try {
-                        val auditReport = checkSecurityLoopholes(targetUrl)
+                        val formattedUrl = if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
+                            "https://$targetUrl"
+                        } else {
+                            targetUrl
+                        }
+
+                        val url = URL(formattedUrl)
+                        val connection = url.openConnection() as HttpURLConnection
+                        connection.connectTimeout = 4000
+                        connection.connect()
+
+                        val sb = StringBuilder()
+                        sb.append("Target: $targetUrl\n")
+                        sb.append("Connection: Successful\n")
+                        sb.append("Protocol: ${url.protocol.uppercase()}\n")
+                        
+                        val hsts = connection.getHeaderField("Strict-Transport-Security")
+                        sb.append("HSTS: ${if (hsts != null) "Secure" else "Missing"}\n")
+
                         runOnUiThread {
-                            resultView.text = auditReport
+                            resultView.text = sb.toString()
                         }
                     } catch (e: Exception) {
                         runOnUiThread {
-                            resultView.text = "[X] Error during audit: ${e.localizedMessage}"
+                            resultView.text = "Audit failed: ${e.message}"
                         }
                     }
                 }
             } else {
-                resultView.text = "[!] Please enter a valid Domain or URL (e.g., example.com)"
+                resultView.text = "Please enter a valid domain."
             }
         }
-    }
-
-    private fun checkSecurityLoopholes(targetUrl: String): String {
-        val report = StringBuilder()
-        report.append("=== SecurityProUltra Audit Report ===\n\n")
-
-        try {
-            val formattedUrl = if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
-                "https://$targetUrl"
-            } else {
-                targetUrl
-            }
-
-            val url = URL(formattedUrl)
-            val connection = url.openConnection() as HttpURLConnection
-            connection.requestMethod = "GET"
-            connection.connectTimeout = 5000
-            connection.connect()
-
-            if (url.protocol.equals("http", ignoreCase = true)) {
-                report.append("[!] HIGH RISK: Unencrypted HTTP protocol.\n")
-            } else {
-                report.append("[+] Secure Protocol: HTTPS active.\n")
-            }
-
-            if (connection.getHeaderField("Strict-Transport-Security") == null) {
-                report.append("[-] Vulnerability: Missing HSTS header.\n")
-            } else {
-                report.append("[+] HSTS Header secured.\n")
-            }
-
-            if (connection.getHeaderField("Content-Security-Policy") == null) {
-                report.append("[-] Vulnerability: Missing CSP header.\n")
-            } else {
-                report.append("[+] CSP Header secured.\n")
-            }
-
-            if (connection.getHeaderField("X-Frame-Options") == null) {
-                report.append("[-] Vulnerability: Missing X-Frame-Options.\n")
-            } else {
-                report.append("[+] X-Frame-Options secured.\n")
-            }
-
-        } catch (e: Exception) {
-            report.append("[X] Scan failed: ${e.message}\n")
-        }
-
-        return report.toString()
     }
 }
