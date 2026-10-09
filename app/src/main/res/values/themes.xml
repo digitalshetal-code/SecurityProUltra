@@ -1,8 +1,7 @@
 <resources>
-    <style name="Theme.SecurityProUltra" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="Theme.SecurityProUltra" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="colorPrimary">#00FF66</item>
         <item name="colorPrimaryDark">#000000</item>
         <item name="colorAccent">#00FF66</item>
-        <item name="android:windowBackground">#0A0A0A</item>
     </style>
 </resources>
