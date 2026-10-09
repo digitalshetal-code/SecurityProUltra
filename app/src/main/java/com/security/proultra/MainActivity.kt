@@ -6,6 +6,7 @@ import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import java.net.HttpURLConnection
+import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.net.URL
@@ -25,7 +26,7 @@ class MainActivity : AppCompatActivity() {
         btnCheck.setOnClickListener {
             val rawInput = inputField.text.toString().trim()
             if (rawInput.isNotEmpty()) {
-                resultView.text = "[*] Running Deep Security Audit...\nPlease wait..."
+                resultView.text = "[*] Running Ultimate Security & Risk Audit...\nPlease wait..."
                 
                 thread {
                     val report = StringBuilder()
@@ -33,7 +34,18 @@ class MainActivity : AppCompatActivity() {
                     
                     report.append("=== Target: $cleanHost ===\n\n")
 
-                    // 1. HTTP Headers & Protocol Audit
+                    var riskScore = 100 // Starting with full score, deducting for missing security headers
+
+                    // 1. IP Address Lookup
+                    try {
+                        val address = InetAddress.getByName(cleanHost)
+                        report.append("--- IP & Network Info ---\n")
+                        report.append("IP Address: ${address.hostAddress}\n\n")
+                    } catch (e: Exception) {
+                        report.append("[!] IP Lookup Error: ${e.localizedMessage}\n\n")
+                    }
+
+                    // 2. HTTP Headers & Protocol Audit
                     try {
                         val targetUrl = if (!rawInput.startsWith("http://") && !rawInput.startsWith("https://")) {
                             "https://$rawInput"
@@ -46,15 +58,21 @@ class MainActivity : AppCompatActivity() {
                         connection.connectTimeout = 5000
                         connection.connect()
 
-                        report.append("[+] Protocol: ${url.protocol.uppercase()}\n")
+                        report.append("--- Web Security Audit ---\n")
+                        report.append("Protocol: ${url.protocol.uppercase()}\n")
+                        if (url.protocol.equals("http", ignoreCase = true)) {
+                            riskScore -= 30
+                        }
                         
                         val hsts = connection.getHeaderField("Strict-Transport-Security")
-                        report.append("[-] HSTS Header: ${if (hsts != null) "Secure" else "Missing"}\n")
+                        report.append("HSTS Header: ${if (hsts != null) "Secure" else "Missing"}\n")
+                        if (hsts == null) riskScore -= 20
 
                         val csp = connection.getHeaderField("Content-Security-Policy")
-                        report.append("[-] CSP Header: ${if (csp != null) "Secure" else "Missing"}\n")
+                        report.append("CSP Header: ${if (csp != null) "Secure" else "Missing"}\n")
+                        if (csp == null) riskScore -= 20
 
-                        // 2. SSL Certificate Details (If HTTPS)
+                        // 3. SSL Certificate Details
                         if (connection is HttpsURLConnection) {
                             try {
                                 val certs = connection.serverCertificates
@@ -67,13 +85,15 @@ class MainActivity : AppCompatActivity() {
                                 }
                             } catch (e: Exception) {
                                 report.append("\n[!] SSL Cert read error: ${e.message}\n")
+                                riskScore -= 20
                             }
                         }
                     } catch (e: Exception) {
                         report.append("[X] Web Audit Error: ${e.localizedMessage}\n")
+                        riskScore = 0
                     }
 
-                    // 3. Port Scanner Audit (Ports 80, 443, 8080)
+                    // 4. Port Scanner Audit
                     report.append("\n--- Port Scan Results ---\n")
                     val portsToScan = intArrayOf(80, 443, 8080)
                     for (port in portsToScan) {
@@ -86,6 +106,17 @@ class MainActivity : AppCompatActivity() {
                             report.append("[CLOSED] Port $port\n")
                         }
                     }
+
+                    // Final Security Rating Summary
+                    if (riskScore < 0) riskScore = 0
+                    report.append("\n=============================\n")
+                    report.append("Security Rating: $riskScore/100\n")
+                    report.append(when {
+                        riskScore >= 80 -> "Status: Highly Secure [OK]"
+                        riskScore >= 50 -> "Status: Moderate Security [WARNING]"
+                        else -> "Status: High Vulnerability [RISK]"
+                    })
+                    report.append("\n=============================\n")
 
                     runOnUiThread {
                         resultView.text = report.toString()
